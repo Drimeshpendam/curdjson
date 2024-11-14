@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Names and Surnames CRUD</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Names and Surnames CRUD</h1>
+
+        <form id="form">
+            <input type="text" id="name" placeholder="First Name" required>
+            <input type="text" id="surname" placeholder="Surname" required>
+            <button type="submit">Add Name</button>
+        </form>
+
+        <h2>List of Names and Surnames</h2>
+        <ul id="names-list"></ul>
+    </div>
+
+    <script>
+        // Fetch data from the backend API
+        function fetchNames() {
+            fetch('/api/names')
+                .then(response => response.json())
+                .then(data => {
+                    const list = document.getElementById('names-list');
+                    list.innerHTML = '';
+                    data.forEach((entry, index) => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `${entry.name} ${entry.surname} 
+                            <button onclick="deleteName(${index})">Delete</button>
+                            <button onclick="editName(${index}, '${entry.name}', '${entry.surname}')">Edit</button>`;
+                        list.appendChild(li);
+                    });
+                });
+        }
+
+        // Add a new name
+        document.getElementById('form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const name = document.getElementById('name').value;
+            const surname = document.getElementById('surname').value;
+
+            fetch('/api/names', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, surname })
+            })
+                .then(response => response.json())
+                .then(() => {
+                    document.getElementById('name').value = '';
+                    document.getElementById('surname').value = '';
+                    fetchNames();
+                });
+        });
+
+        // Delete a name
+        function deleteName(index) {
+            fetch(`/api/names/${index}`, {
+                method: 'DELETE'
+            })
+                .then(() => fetchNames());
+        }
+
+        // Edit a name
+        function editName(index, currentName, currentSurname) {
+            const newName = prompt('Edit First Name', currentName);
+            const newSurname = prompt('Edit Surname', currentSurname);
+
+            if (newName && newSurname) {
+                fetch(`/api/names/${index}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: newName, surname: newSurname })
+                })
+                    .then(() => fetchNames());
+            }
+        }
+
+        // Initial fetch
+        fetchNames();
+    </script>
+</body>
+</html>
